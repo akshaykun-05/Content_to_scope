@@ -1,0 +1,26 @@
+{
+  "name": "contentoscope",
+  "version": "1.0.0",
+  "description": "AI-powered content reasoning platform",
+  "scripts": {
+    "dev": "chmod +x scripts/dev.sh && ./scripts/dev.sh",
+    "build": "chmod +x scripts/build-all.sh && ./scripts/build-all.sh",
+    "deploy": "chmod +x scripts/deploy.sh && ./scripts/deploy.sh",
+    "validate": "chmod +x scripts/validate.sh && ./scripts/validate.sh",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "build:infrastructure": "cd infrastructure && npm run build",
+    "test": "npm run test:backend",
+    "test:backend": "cd backend && npm run test",
+    "clean": "rm -rf */node_modules */dist frontend/dist backend/dist infrastructure/cdk.out"
+  },
+  "workspaces": [
+    "frontend",
+    "backend",
+    "infrastructure"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
