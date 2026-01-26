@@ -15,12 +15,15 @@ Frontend:
 - React Router for navigation
 - React Dropzone for file uploads
 - Recharts for data visualization
+- Firebase Authentication for Google OAuth
+- React Firebase Hooks for auth state management
 
 Backend:
 - AWS Lambda with Node.js 18.x runtime
 - TypeScript for type safety
 - OpenAI API for content analysis
 - AWS SDK for service integration
+- Firebase Admin SDK for token verification
 
 Infrastructure:
 - AWS CDK for Infrastructure as Code
@@ -28,18 +31,29 @@ Infrastructure:
 - DynamoDB for data persistence
 - S3 for file storage and static hosting
 - CloudFront for global CDN
+- Firebase for authentication services
 - GitHub Actions for CI/CD
 
 ### Component Architecture
-ContentScope Project Structure includes Frontend React SPA with Pages for LandingPage, ContentInput, AnalysisDashboard, PlatformAdaptation, and LearningInsights. Components include Layout, Navigation, and UI Components. Services include API Client. Backend Lambda Functions have Handlers for analyzeContent and adaptContent. Services include AIService. Types include Interfaces. Infrastructure uses AWS CDK with ContentScope Stack.
+ContentScope Project Structure includes Frontend React SPA with Pages for LandingPage, Login/SignUp, ContentInput, AnalysisDashboard, PlatformAdaptation, and LearningInsights. Components include Layout, Navigation, ProtectedRoute, and UI Components. Services include API Client and Firebase Auth. Contexts include AuthContext for user state management. Backend Lambda Functions have Handlers for analyzeContent, adaptContent, getUserStats, and updateUserProgress. Services include AIService and UserService. Types include Interfaces. Infrastructure uses AWS CDK with ContentScope Stack and Firebase Authentication integration.
 
 ## 2. Data Models
 
+### User Authentication
+User Profile Structure includes uid as Firebase user ID string, email as user email string, displayName as user display name string, photoURL as user profile photo URL string, provider as authentication provider string (google), createdAt as account creation timestamp string, lastLoginAt as last login timestamp string, and preferences as user preferences object.
+
+### User Progress Tracking
+User Stats Structure includes userId as Firebase user ID string, totalAnalyses as number of analyses completed, currentStreak as consecutive days with activity, longestStreak as longest streak achieved, averageScore as average content score across all analyses, modulesCompleted as array of completed module IDs, achievements as array of earned achievement IDs, lastActivityDate as last activity timestamp string, weeklyProgress as array of daily activity for current week, and monthlyProgress as array of weekly summaries for current month.
+
+Module Progress Structure includes moduleId as unique module identifier string, title as module title string, description as module description string, status as not_started or in_progress or completed, completedAt as completion timestamp string, score as module completion score number, and lessonsCompleted as array of completed lesson IDs.
+
+Achievement Structure includes achievementId as unique achievement identifier string, title as achievement title string, description as achievement description string, icon as achievement icon URL string, category as achievement category string, unlockedAt as unlock timestamp string, and progress as current progress towards achievement number.
+
 ### Content Analysis Request
-Content Analysis Request Structure includes content as string for the content to analyze, contentType as text or image or url, platforms as array of platform names, and userId as optional string.
+Content Analysis Request Structure includes content as string for the content to analyze, contentType as text or image or url, platforms as array of platform names, and userId as Firebase user ID string.
 
 ### Content Analysis Response
-Content Analysis Response Structure includes analysisId as unique identifier string, overallScore as number from 0 to 100, platformScores as array of platform score objects, engagementFactors as array of engagement factor objects, failurePoints as array of failure point objects, improvements as array of improvement objects, and adaptations as object mapping platforms to adapted content.
+Content Analysis Response Structure includes analysisId as unique identifier string, overallScore as number from 0 to 100, platformScores as array of platform score objects, engagementFactors as array of engagement factor objects, failurePoints as array of failure point objects, improvements as array of improvement objects, adaptations as object mapping platforms to adapted content, and userId as Firebase user ID string.
 
 Platform Score Object includes platform as platform name string, score as number from 0 to 100, and color as color code string.
 
@@ -50,28 +64,92 @@ Failure Point Object includes type as critical or warning or info, title as issu
 Improvement Object includes priority as high or medium or low, title as improvement title string, description as detailed description string, and expectedImpact as expected impact description string.
 
 ### Platform Adaptation Request
-Platform Adaptation Request Structure includes content as string for content to adapt, sourcePlatform as optional source platform string, targetPlatform as target platform string, and userId as optional user identifier string.
+Platform Adaptation Request Structure includes content as string for content to adapt, sourcePlatform as optional source platform string, targetPlatform as target platform string, and userId as Firebase user ID string.
 
 ### Database Schema for DynamoDB
 
 Analysis Table:
 - Table Name: contentoscope-analysis
 - Partition Key: analysisId as String
-- Attributes: content as String, contentType as String, platforms as StringSet, overallScore as Number, platformScores as Map, engagementFactors as List, failurePoints as List, improvements as List, adaptations as Map, createdAt as String, userId as String and optional
+- Attributes: content as String, contentType as String, platforms as StringSet, overallScore as Number, platformScores as Map, engagementFactors as List, failurePoints as List, improvements as List, adaptations as Map, createdAt as String, userId as String
 
-User Table:
-- Table Name: contentoscope-users
+User Stats Table:
+- Table Name: contentoscope-user-stats
 - Partition Key: userId as String
-- Attributes: email as String, createdAt as String, lastAnalysis as String, analysisCount as Number
+- Attributes: totalAnalyses as Number, currentStreak as Number, longestStreak as Number, averageScore as Number, modulesCompleted as List, achievements as List, lastActivityDate as String, weeklyProgress as List, monthlyProgress as List, createdAt as String, updatedAt as String
+
+Module Progress Table:
+- Table Name: contentoscope-module-progress
+- Partition Key: userId as String
+- Sort Key: moduleId as String
+- Attributes: title as String, description as String, status as String, completedAt as String, score as Number, lessonsCompleted as List, createdAt as String, updatedAt as String
+
+Achievement Table:
+- Table Name: contentoscope-achievements
+- Partition Key: userId as String
+- Sort Key: achievementId as String
+- Attributes: title as String, description as String, icon as String, category as String, unlockedAt as String, progress as Number
 
 ## 3. API Design
 
 ### REST API Endpoints
 Base URL: https://api.contentoscope.com/v1
 
+#### Authentication
+Endpoint: POST /auth/verify
+Content-Type: application/json
+Authorization: Bearer <firebase-token>
+
+Request Headers:
+Authorization: Bearer <firebase-id-token>
+
+Response Example:
+{
+  "success": true,
+  "data": {
+    "userId": "firebase-uid",
+    "email": "user@example.com",
+    "verified": true
+  }
+}
+
+#### User Stats
+Endpoint: GET /user/stats
+Authorization: Bearer <firebase-token>
+
+Response Example:
+{
+  "success": true,
+  "data": {
+    "totalAnalyses": 45,
+    "currentStreak": 7,
+    "longestStreak": 12,
+    "averageScore": 78.5,
+    "modulesCompleted": ["module_1", "module_2"],
+    "achievements": ["first_analysis", "week_streak"],
+    "weeklyProgress": [
+      {"date": "2024-01-20", "analyses": 3, "avgScore": 82},
+      {"date": "2024-01-21", "analyses": 2, "avgScore": 75}
+    ]
+  }
+}
+
+#### Update User Progress
+Endpoint: POST /user/progress
+Content-Type: application/json
+Authorization: Bearer <firebase-token>
+
+Request Body Example:
+{
+  "analysisScore": 85,
+  "moduleCompleted": "module_3",
+  "achievementUnlocked": "perfect_score"
+}
+
 #### Content Analysis
 Endpoint: POST /analyze
 Content-Type: application/json
+Authorization: Bearer <firebase-token>
 
 Request Body Example:
 {
@@ -97,6 +175,7 @@ Response Example:
 #### Content Adaptation
 Endpoint: POST /adapt
 Content-Type: application/json
+Authorization: Bearer <firebase-token>
 
 Request Body Example:
 {
@@ -171,24 +250,38 @@ Data Display Components:
 ### Page Layouts
 
 #### Landing Page Structure
-- Header (Navigation)
-- Hero Section with Main headline, Value proposition, CTA button
+- Header (Navigation with Login/Sign Up buttons)
+- Hero Section with Main headline, Value proposition, CTA button (Get Started / Sign Up)
 - Features Section with AI Analysis, Platform Optimization, Real-time Insights
-- How It Works with Step 1: Upload Content, Step 2: Select Platforms, Step 3: Get Insights
+- How It Works with Step 1: Sign Up with Google, Step 2: Upload Content, Step 3: Select Platforms, Step 4: Get Insights & Track Progress
 - Footer
 
-#### Content Input Page Structure
-- Header (Navigation)
+#### Login/Sign Up Page Structure
+- Header (Navigation with back to home)
+- Authentication Card (Center) with Google Sign In Button, Terms and Privacy links, Welcome message for new users, Redirect to dashboard after successful login
+- Background with subtle branding
+- Footer (minimal)
+
+#### Content Input Page Structure (Protected Route)
+- Header (Navigation with user profile dropdown)
 - Page Title & Description
 - Content Input Section (Left 2/3) with Content Type Selector (Text/Image/URL tabs) and Content Input Area
 - Platform Selection & Analysis (Right 1/3) with Platform Checkboxes (Twitter, LinkedIn, Instagram, Facebook, YouTube, Blog), Analysis Button, and Analysis Preview
 
-#### Analysis Dashboard Structure
-- Header (Navigation)
-- Dashboard Header with Action Buttons
+#### Analysis Dashboard Structure (Protected Route)
+- Header (Navigation with user profile dropdown)
+- Dashboard Header with Action Buttons and User Stats Summary (Current Streak, Total Analyses)
 - Score Overview (Top Row) with Overall Score Card and Platform Score Cards
 - Main Analysis Grid (3 Columns) with Engagement Factors, Platform Performance Chart, and Top Improvements
 - Issues & Next Steps (2 Columns) with Issues Identified and Next Steps
+
+#### Learning Insights Page Structure (Protected Route)
+- Header (Navigation with user profile dropdown)
+- Page Title & User Progress Summary
+- Stats Overview (Top Row) with Current Streak Card, Total Analyses Card, Average Score Card, and Modules Completed Card
+- Progress Tracking (2 Columns) with Weekly Activity Chart and Monthly Progress Chart
+- Learning Path Section with Available Modules (Coming Soon placeholder), Best Practices Cards, and Achievement Gallery
+- Recent Activity Feed with Analysis History and Progress Milestones
 
 ### Responsive Design
 
@@ -253,16 +346,18 @@ Blog/Website:
 ## 6. Security Design
 
 ### Authentication & Authorization
-- No user authentication required for MVP
-- API key management for OpenAI integration
-- Rate limiting on API endpoints
-- Input validation and sanitization
+- Firebase Authentication with Google OAuth integration
+- Protected routes requiring authentication
+- JWT token verification for API requests
+- User session management with automatic refresh
+- Secure logout and session cleanup
 
 ### Data Security
 - HTTPS encryption for all communications
+- Firebase security rules for user data access
 - Secure environment variable management
-- No persistent storage of user content
-- Session-based temporary data storage
+- No persistent storage of sensitive content
+- User data isolation and privacy protection
 
 ### API Security
 - CORS configuration for allowed origins
@@ -299,10 +394,12 @@ Blog/Website:
 - Performance monitoring
 
 ### User Analytics
-- Page view tracking
-- Analysis completion rates
-- Feature usage metrics
-- User journey analysis
+- User engagement and retention metrics
+- Analysis completion rates and patterns
+- Feature usage tracking (by authenticated users)
+- Learning progress and achievement analytics
+- User journey and conversion funnel analysis
+- Streak and progress milestone tracking
 
 ### Business Metrics
 - Content analysis volume
@@ -313,28 +410,32 @@ Blog/Website:
 ## 9. Deployment Architecture
 
 ### Infrastructure as Code
-CDK Stack Components include DynamoDB Tables for data storage, S3 Buckets for file storage, Lambda Functions for API endpoints, API Gateway for REST API, CloudFront Distribution for CDN, and IAM Roles and Policies for security.
+CDK Stack Components include DynamoDB Tables for data storage (analysis, user-stats, module-progress, achievements), S3 Buckets for file storage, Lambda Functions for API endpoints (analyze, adapt, user-stats, auth-verify), API Gateway for REST API, CloudFront Distribution for CDN, IAM Roles and Policies for security, and Firebase project configuration for authentication.
 
 ### CI/CD Pipeline
 GitHub Actions Workflow Steps include Test to run automated tests, Build to build all components (frontend, backend, infrastructure), and Deploy to deploy to AWS infrastructure. Workflow triggers on push to main branch.
 
 ### Environment Management
-- Development: Local development with mock APIs
-- Staging: AWS deployment with test data
-- Production: Full AWS deployment with monitoring
+- Development: Local development with Firebase emulator and mock APIs
+- Staging: AWS deployment with Firebase test project and test data
+- Production: Full AWS deployment with Firebase production project and monitoring
 
 ## 10. Testing Strategy
 
 ### Frontend Testing
 - Unit tests for components (Jest + React Testing Library)
-- Integration tests for API calls
-- E2E tests for critical user flows (Cypress)
+- Authentication flow testing with Firebase emulator
+- Protected route testing
+- Integration tests for API calls with user context
+- E2E tests for critical user flows including login/signup (Cypress)
 - Visual regression testing
 
 ### Backend Testing
 - Unit tests for Lambda functions
+- Firebase token verification testing
+- User progress tracking logic testing
 - Integration tests for AI service
-- API endpoint testing
+- API endpoint testing with authentication
 - Performance testing
 
 ### Infrastructure Testing
@@ -409,28 +510,40 @@ Property 9: Concurrent Request Handling
 
 ## 12. Implementation Phases
 
-### Phase 1: Core Analysis Engine
+### Phase 1: Authentication & Core Analysis
+- Firebase Authentication setup with Google OAuth
+- User registration and profile management
 - Basic content analysis with OpenAI integration
 - Platform scoring algorithm
-- Simple web interface
-- AWS infrastructure setup
+- Protected routes and user context
+- AWS infrastructure setup with user data storage
 
-### Phase 2: Enhanced UI/UX
+### Phase 2: User Progress Tracking
+- User stats tracking (streaks, scores, analyses)
+- Learning Insights page with real user data
+- Progress visualization and charts
+- Achievement system foundation
+- Weekly and monthly progress tracking
+
+### Phase 3: Enhanced UI/UX & Learning Features
 - Responsive design implementation
-- Data visualization components
-- Improved user workflows
-- Error handling and validation
+- Data visualization components for user progress
+- Module system placeholder (Coming Soon)
+- Achievement gallery and progress milestones
+- Improved user workflows and onboarding
 
-### Phase 3: Platform Optimization
-- Platform-specific analysis rules
-- Content adaptation features
-- Advanced recommendations
-- Performance optimizations
+### Phase 4: Learning Modules & Gamification
+- Learning module content creation
+- Interactive lessons and assessments
+- Achievement unlocking system
+- Best practices recommendations
+- Advanced progress analytics
 
-### Phase 4: Production Readiness
-- Comprehensive testing
-- Monitoring and analytics
-- Security hardening
+### Phase 5: Production Readiness
+- Comprehensive testing including auth flows
+- Monitoring and analytics with user tracking
+- Security hardening and privacy compliance
+- Performance optimization
 - Documentation completion
 
 This design specification provides a comprehensive blueprint for implementing the ContentScope platform while ensuring all requirements are met and the system is scalable, maintainable, and user-friendly.

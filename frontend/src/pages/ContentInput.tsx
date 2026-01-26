@@ -5,9 +5,11 @@ import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { contentAPI, ContentAnalysisRequest } from '../services/api'
+import { useAuth } from '../contexts/AuthContext'
 
 const ContentInput = () => {
   const navigate = useNavigate()
+  const { incrementAnalysisCount } = useAuth()
   const [contentType, setContentType] = useState<'text' | 'image' | 'url'>('text')
   const [textContent, setTextContent] = useState('')
   const [urlContent, setUrlContent] = useState('')
@@ -15,8 +17,12 @@ const ContentInput = () => {
 
   const analysisMutation = useMutation({
     mutationFn: (request: ContentAnalysisRequest) => contentAPI.analyzeContent(request),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast.success('Analysis complete!')
+      
+      // Update user progress
+      await incrementAnalysisCount(data.overallScore)
+      
       // Store results in sessionStorage for the dashboard
       sessionStorage.setItem('analysisResults', JSON.stringify(data))
       // Store the original content for potential adaptation

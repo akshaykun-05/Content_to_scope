@@ -6,6 +6,7 @@ import { ContentAnalysisResponse } from '../services/api'
 
 const AnalysisDashboard = () => {
   const [analysisData, setAnalysisData] = useState<ContentAnalysisResponse | null>(null)
+  const [hasAnalysis, setHasAnalysis] = useState(false)
 
   useEffect(() => {
     // Load analysis results from sessionStorage
@@ -14,60 +15,48 @@ const AnalysisDashboard = () => {
       try {
         const data = JSON.parse(storedResults) as ContentAnalysisResponse
         setAnalysisData(data)
+        setHasAnalysis(true)
       } catch (error) {
         console.error('Failed to parse analysis results:', error)
+        setHasAnalysis(false)
       }
+    } else {
+      setHasAnalysis(false)
     }
   }, [])
 
-  // Use real data if available, otherwise fall back to mock data
-  const overallScore = analysisData?.overallScore ?? 72
-  const platformScores = analysisData?.platformScores ?? [
-    { platform: 'Twitter', score: 78, color: '#1DA1F2' },
-    { platform: 'LinkedIn', score: 85, color: '#0077B5' },
-    { platform: 'Instagram', score: 65, color: '#E4405F' },
-    { platform: 'Blog', score: 82, color: '#6B7280' },
-  ]
+  // Show empty state if no analysis has been done
+  if (!hasAnalysis || !analysisData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center">
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Target className="w-8 h-8 text-primary-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">No Analysis Yet</h2>
+            <p className="text-gray-600 mb-8">
+              Start by analyzing your content to see detailed insights and recommendations.
+            </p>
+            <Link 
+              to="/analyze" 
+              className="inline-flex items-center justify-center px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              <Lightbulb className="w-5 h-5 mr-2" />
+              Analyze Content
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-  const engagementFactors = analysisData?.engagementFactors ?? [
-    { name: 'Headline', score: 85, status: 'good' as const, explanation: 'Strong hook that captures attention' },
-    { name: 'Structure', score: 70, status: 'warning' as const, explanation: 'Could benefit from better paragraph breaks' },
-    { name: 'Tone', score: 90, status: 'good' as const, explanation: 'Appropriate tone for target audience' },
-    { name: 'Length', score: 45, status: 'poor' as const, explanation: 'Too long for optimal social media engagement' },
-    { name: 'CTA', score: 60, status: 'warning' as const, explanation: 'Call-to-action could be more specific' },
-  ]
-
-  const failurePoints = analysisData?.failurePoints ?? [
-    {
-      type: 'critical' as const,
-      title: 'Content Too Long for Platform',
-      description: 'Your content exceeds Twitter\'s optimal length of 280 characters.',
-      suggestion: 'Break into a thread or shorten to key points.',
-      impact: 'High' as const
-    },
-    {
-      type: 'warning' as const,
-      title: 'Weak Call-to-Action',
-      description: 'No clear call-to-action detected.',
-      suggestion: 'Add a specific CTA like "Share your thoughts".',
-      impact: 'Medium' as const
-    }
-  ]
-
-  const improvements = analysisData?.improvements ?? [
-    {
-      priority: 'high' as const,
-      title: 'Shorten Content Length',
-      description: 'Reduce content to 250 characters or less for optimal Twitter engagement',
-      expectedImpact: '+25% engagement'
-    },
-    {
-      priority: 'medium' as const,
-      title: 'Add Clear CTA',
-      description: 'Include a specific call-to-action to drive user engagement',
-      expectedImpact: '+15% click-through'
-    }
-  ]
+  // Use real analysis data
+  const overallScore = analysisData.overallScore
+  const platformScores = analysisData.platformScores
+  const engagementFactors = analysisData.engagementFactors
+  const failurePoints = analysisData.failurePoints
+  const improvements = analysisData.improvements
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600'

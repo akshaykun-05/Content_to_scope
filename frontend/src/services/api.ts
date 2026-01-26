@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getAuth } from 'firebase/auth'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kw1mp0na2e.execute-api.us-east-1.amazonaws.com/prod/api/v1'
 
@@ -12,11 +13,17 @@ const apiClient = axios.create({
 
 // Request interceptor
 apiClient.interceptors.request.use(
-  (config) => {
-    // Add auth token if available
-    const token = localStorage.getItem('authToken')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+  async (config) => {
+    // Add Firebase auth token if available
+    const auth = getAuth()
+    const user = auth.currentUser
+    if (user) {
+      try {
+        const token = await user.getIdToken()
+        config.headers.Authorization = `Bearer ${token}`
+      } catch (error) {
+        console.error('Failed to get auth token:', error)
+      }
     }
     return config
   },
@@ -32,8 +39,7 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized access
-      localStorage.removeItem('authToken')
+      // Handle unauthorized access - redirect to login
       window.location.href = '/login'
     }
     return Promise.reject(error)
@@ -85,6 +91,37 @@ export interface PlatformAdaptationRequest {
   userId?: string
 }
 
+export interface UserStats {
+  userId: string
+  totalAnalyses: number
+  currentStreak: number
+  longestStreak: number
+  averageScore: number
+  modulesCompleted: string[]
+  achievements: string[]
+  lastActivityDate: string
+  weeklyProgress: Array<{
+    date: string
+    analyses: number
+    avgScore: number
+  }>
+  monthlyProgress: Array<{
+    week: string
+    analyses: number
+    avgScore: number
+  }>
+  platformsUsed: string[]
+}
+
+export interface UserProgressUpdate {
+  analysisScore?: number
+  moduleCompleted?: string
+  achievementUnlocked?: string
+  streakDays?: number
+  lastActivityDate?: string
+  modulesCompleted?: string[]
+}
+
 export interface APIResponse<T = any> {
   success: boolean
   data?: T
@@ -121,6 +158,26 @@ export const contentAPI = {
     return response.data.data!
   },
 
+}
+
+export const userAPI = {
+  async getUserStats(): Promise<UserStats> {
+    const response = await apiClient.get<APIResponse<UserStats>>('/user/stats')
+    
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to fetch user stats')
+    }
+    
+    return response.data.data!
+  },
+
+  async updateUserProgress(update: UserProgressUpdate): Promise<void> {
+    const response = await apiClient.post<APIResponse>('/user/progress', update)
+    
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to update user progress')
+    }
+  }
 }
 
 export default apiClient

@@ -26,9 +26,38 @@ export class ContentscopeStack extends cdk.Stack {
       }
     })
 
-    const userTable = new dynamodb.Table(this, 'UserTable', {
-      tableName: 'contentoscope-users',
+    // Add GSI for querying by userId
+    analysisTable.addGlobalSecondaryIndex({
+      indexName: 'UserIdIndex',
       partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'createdAt', type: dynamodb.AttributeType.STRING }
+    })
+
+    const userStatsTable = new dynamodb.Table(this, 'UserStatsTable', {
+      tableName: 'contentoscope-user-stats',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      pointInTimeRecoverySpecification: {
+        pointInTimeRecoveryEnabled: false
+      }
+    })
+
+    const moduleProgressTable = new dynamodb.Table(this, 'ModuleProgressTable', {
+      tableName: 'contentoscope-module-progress',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'moduleId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      pointInTimeRecoverySpecification: {
+        pointInTimeRecoveryEnabled: false
+      }
+    })
+
+    const achievementTable = new dynamodb.Table(this, 'AchievementTable', {
+      tableName: 'contentoscope-achievements',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'achievementId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       pointInTimeRecoverySpecification: {
@@ -70,8 +99,10 @@ export class ContentscopeStack extends cdk.Stack {
       memorySize: 512,
       environment: {
         ANALYSIS_TABLE_NAME: analysisTable.tableName,
+        USER_STATS_TABLE_NAME: userStatsTable.tableName,
         CONTENT_BUCKET_NAME: contentBucket.bucketName,
-        OPENAI_API_KEY: openaiApiKey
+        OPENAI_API_KEY: openaiApiKey,
+        FIREBASE_PROJECT_ID: 'contentoscope-auth'
       }
     })
 
@@ -83,14 +114,50 @@ export class ContentscopeStack extends cdk.Stack {
       memorySize: 512,
       environment: {
         ANALYSIS_TABLE_NAME: analysisTable.tableName,
-        OPENAI_API_KEY: openaiApiKey
+        OPENAI_API_KEY: openaiApiKey,
+        FIREBASE_PROJECT_ID: 'contentoscope-auth'
+      }
+    })
+
+    const getUserStatsFunction = new lambda.Function(this, 'GetUserStatsFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'handlers/getUserStats.handler',
+      code: lambda.Code.fromAsset('../backend/dist'),
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      environment: {
+        ANALYSIS_TABLE_NAME: analysisTable.tableName,
+        USER_STATS_TABLE_NAME: userStatsTable.tableName,
+        FIREBASE_PROJECT_ID: 'contentoscope-auth'
+      }
+    })
+
+    const updateUserProgressFunction = new lambda.Function(this, 'UpdateUserProgressFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'handlers/updateUserProgress.handler',
+      code: lambda.Code.fromAsset('../backend/dist'),
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      environment: {
+        USER_STATS_TABLE_NAME: userStatsTable.tableName,
+        MODULE_PROGRESS_TABLE_NAME: moduleProgressTable.tableName,
+        ACHIEVEMENT_TABLE_NAME: achievementTable.tableName,
+        FIREBASE_PROJECT_ID: 'contentoscope-auth'
       }
     })
 
     // Grant permissions
     analysisTable.grantReadWriteData(analyzeContentFunction)
     analysisTable.grantReadWriteData(adaptContentFunction)
-    userTable.grantReadWriteData(analyzeContentFunction)
+    analysisTable.grantReadData(getUserStatsFunction)
+    
+    userStatsTable.grantReadWriteData(analyzeContentFunction)
+    userStatsTable.grantReadWriteData(getUserStatsFunction)
+    userStatsTable.grantReadWriteData(updateUserProgressFunction)
+    
+    moduleProgressTable.grantReadWriteData(updateUserProgressFunction)
+    achievementTable.grantReadWriteData(updateUserProgressFunction)
+    
     contentBucket.grantReadWrite(analyzeContentFunction)
 
     // API Gateway
@@ -112,6 +179,13 @@ export class ContentscopeStack extends cdk.Stack {
 
     const adaptResource = v1.addResource('adapt')
     adaptResource.addMethod('POST', new apigateway.LambdaIntegration(adaptContentFunction))
+
+    const userResource = v1.addResource('user')
+    const statsResource = userResource.addResource('stats')
+    statsResource.addMethod('GET', new apigateway.LambdaIntegration(getUserStatsFunction))
+    
+    const progressResource = userResource.addResource('progress')
+    progressResource.addMethod('POST', new apigateway.LambdaIntegration(updateUserProgressFunction))
 
     // CloudFront Distribution
     const distribution = new cloudfront.Distribution(this, 'ContentscopeDistribution', {

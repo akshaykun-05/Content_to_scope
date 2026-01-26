@@ -328,7 +328,7 @@ export class AIService {
     return adaptations
   }
 
-  private generatePlatformAdaptation(platform: string, content: string): string {
+  public generatePlatformAdaptation(platform: string, content: string): string {
     switch (platform) {
       case 'twitter':
         return this.adaptForTwitter(content)

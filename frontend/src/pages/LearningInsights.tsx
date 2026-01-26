@@ -1,8 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { BookOpen, Play, CheckCircle, Clock, TrendingUp, Award, ArrowRight, Lightbulb } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 
 const LearningInsights = () => {
   const [activeTab, setActiveTab] = useState('recommendations')
+  const { userData, updateUserProgress, updateStreak } = useAuth()
+
+  // Update streak when component loads
+  useEffect(() => {
+    updateStreak()
+  }, [updateStreak])
 
   const learningPath = [
     {
@@ -10,7 +18,7 @@ const LearningInsights = () => {
       title: 'Content Structure Fundamentals',
       description: 'Learn how to structure your content for maximum engagement',
       duration: '15 min',
-      completed: true,
+      completed: userData ? userData.modulesCompleted.includes(`module_${1}`) : false,
       type: 'article',
       videoUrl: 'https://www.youtube.com/watch?v=B_2ZSPGNqhY'
     },
@@ -19,7 +27,7 @@ const LearningInsights = () => {
       title: 'Platform-Specific Writing Styles',
       description: 'Master the art of adapting your tone for different platforms',
       duration: '20 min',
-      completed: true,
+      completed: userData ? userData.modulesCompleted.includes(`module_${2}`) : false,
       type: 'video',
       videoUrl: 'https://www.youtube.com/watch?v=ZVvq7xKRXjg'
     },
@@ -28,7 +36,7 @@ const LearningInsights = () => {
       title: 'Effective Call-to-Actions',
       description: 'Create CTAs that drive engagement and conversions',
       duration: '12 min',
-      completed: false,
+      completed: userData ? userData.modulesCompleted.includes(`module_${3}`) : false,
       type: 'interactive',
       videoUrl: 'https://www.youtube.com/watch?v=8JJ101D3knE'
     },
@@ -37,7 +45,7 @@ const LearningInsights = () => {
       title: 'Hashtag Strategy Mastery',
       description: 'Optimize your hashtag usage for better discoverability',
       duration: '18 min',
-      completed: false,
+      completed: userData ? userData.modulesCompleted.includes(`module_${4}`) : false,
       type: 'article',
       videoUrl: 'https://www.youtube.com/watch?v=ZXsQAXx_ao0'
     }
@@ -136,30 +144,44 @@ const LearningInsights = () => {
     }
   ]
 
+  // Real achievements based on user data
   const achievements = [
+    {
+      title: 'Welcome to ContentScope',
+      description: 'Joined the ContentScope community',
+      earned: userData ? userData.achievements.includes('welcome') : false,
+      date: userData ? new Date().toLocaleDateString() : '' // Use current date since we don't have createdAt
+    },
     {
       title: 'Content Analyzer',
       description: 'Analyzed your first piece of content',
-      earned: true,
-      date: '2 days ago'
+      earned: userData ? userData.totalAnalyses >= 1 : false,
+      date: userData && userData.totalAnalyses >= 1 ? '1 day ago' : ''
     },
     {
       title: 'Platform Master',
       description: 'Adapted content for 3 different platforms',
-      earned: true,
-      date: '1 day ago'
+      earned: userData ? userData.platformsUsed.length >= 3 : false,
+      date: userData && userData.platformsUsed.length >= 3 ? '1 day ago' : '',
+      progress: userData ? Math.min(100, (userData.platformsUsed.length / 3) * 100) : 0
     },
     {
       title: 'Quick Learner',
       description: 'Completed 5 learning modules',
-      earned: false,
-      progress: 60
+      earned: userData ? userData.modulesCompleted.length >= 5 : false,
+      progress: userData ? Math.min(100, (userData.modulesCompleted.length / 5) * 100) : 0
     },
     {
       title: 'Engagement Expert',
-      description: 'Achieved 80%+ engagement prediction score',
-      earned: false,
-      progress: 75
+      description: 'Achieved 80%+ average score',
+      earned: userData ? userData.averageScore >= 80 : false,
+      progress: userData ? Math.min(100, userData.averageScore) : 0
+    },
+    {
+      title: 'Streak Master',
+      description: 'Maintained a 7-day learning streak',
+      earned: userData ? userData.currentStreak >= 7 : false,
+      progress: userData ? Math.min(100, (userData.currentStreak / 7) * 100) : 0
     }
   ]
 
@@ -193,11 +215,30 @@ const LearningInsights = () => {
     }
   ]
 
-  const progressStats = {
-    modulesCompleted: 12,
-    totalModules: 25,
-    streakDays: 5,
-    skillLevel: 'Intermediate'
+  // Calculate skill level based on modules completed
+  const getSkillLevel = () => {
+    if (!userData) return 'Beginner'
+    const totalModules = 25 // Total available modules
+    const completionRate = userData.modulesCompleted.length / totalModules
+    if (completionRate >= 0.8) return 'Expert'
+    if (completionRate >= 0.5) return 'Advanced'
+    if (completionRate >= 0.2) return 'Intermediate'
+    return 'Beginner'
+  }
+
+  const handleModuleComplete = async (moduleId: number) => {
+    if (!userData) return
+    
+    const currentModule = learningPath.find(m => m.id === moduleId)
+    if (!currentModule || currentModule.completed) return
+
+    // Update modules completed
+    await updateUserProgress({
+      modulesCompleted: [...userData.modulesCompleted, `module_${moduleId}`]
+    })
+
+    // Open the video
+    window.open(currentModule.videoUrl, '_blank')
   }
 
   const getTypeIcon = (type: string) => {
@@ -222,6 +263,77 @@ const LearningInsights = () => {
     }
   }
 
+  // Show loading state if user data is not available
+  if (!userData) {
+    return (
+      <div className="flex items-center justify-center min-h-64">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your learning insights...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show welcome state for new users with no activity
+  if (userData.totalAnalyses === 0) {
+    return (
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Learning Insights</h1>
+            <p className="text-gray-600 mt-2">Welcome! Start analyzing content to see your personalized learning path</p>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-primary-600">Beginner</div>
+            <div className="text-sm text-gray-600">Current Level</div>
+          </div>
+        </div>
+
+        {/* Welcome Card */}
+        <div className="card bg-gradient-to-r from-primary-50 to-purple-50 border-primary-200">
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Lightbulb className="w-8 h-8 text-primary-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Start Your Learning Journey</h2>
+            <p className="text-gray-600 mb-8 max-w-md mx-auto">
+              Analyze your first piece of content to unlock personalized insights, track your progress, and discover learning opportunities.
+            </p>
+            <Link 
+              to="/analyze" 
+              className="inline-flex items-center justify-center px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              <TrendingUp className="w-5 h-5 mr-2" />
+              Analyze Your First Content
+            </Link>
+          </div>
+        </div>
+
+        {/* Preview of what's coming */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="card text-center opacity-50">
+            <div className="text-2xl font-bold text-gray-400">0</div>
+            <div className="text-gray-500 mt-1">Modules Completed</div>
+          </div>
+          <div className="card text-center opacity-50">
+            <div className="text-2xl font-bold text-gray-400">0</div>
+            <div className="text-gray-500 mt-1">Day Streak</div>
+          </div>
+          <div className="card text-center opacity-50">
+            <div className="text-2xl font-bold text-gray-400">-</div>
+            <div className="text-gray-500 mt-1">Avg. Score</div>
+          </div>
+          <div className="card text-center opacity-50">
+            <div className="text-2xl font-bold text-gray-400">1</div>
+            <div className="text-gray-500 mt-1">Achievements</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -231,7 +343,7 @@ const LearningInsights = () => {
           <p className="text-gray-600 mt-2">Personalized learning path based on your content analysis</p>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-primary-600">{progressStats.skillLevel}</div>
+          <div className="text-2xl font-bold text-primary-600">{getSkillLevel()}</div>
           <div className="text-sm text-gray-600">Current Level</div>
         </div>
       </div>
@@ -239,32 +351,40 @@ const LearningInsights = () => {
       {/* Progress Overview - Mobile-friendly */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <div className="card text-center">
-          <div className="text-2xl font-bold text-primary-600">{progressStats.modulesCompleted}</div>
+          <div className="text-2xl font-bold text-primary-600">{userData.modulesCompleted.length}</div>
           <div className="text-gray-600 mt-1">Modules Completed</div>
           <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
             <div
               className="bg-primary-500 h-2 rounded-full"
-              style={{ width: `${(progressStats.modulesCompleted / progressStats.totalModules) * 100}%` }}
+              style={{ width: `${(userData.modulesCompleted.length / 25) * 100}%` }}
             ></div>
           </div>
         </div>
 
         <div className="card text-center">
-          <div className="text-2xl font-bold text-green-600">{progressStats.streakDays}</div>
+          <div className="text-2xl font-bold text-green-600">{userData.currentStreak}</div>
           <div className="text-gray-600 mt-1">Day Streak</div>
           <div className="text-xs text-green-600 mt-1">Keep it up!</div>
         </div>
 
         <div className="card text-center">
-          <div className="text-2xl font-bold text-yellow-600">85%</div>
+          <div className="text-2xl font-bold text-yellow-600">
+            {userData.averageScore > 0 ? `${Math.round(userData.averageScore)}%` : 'N/A'}
+          </div>
           <div className="text-gray-600 mt-1">Avg. Score</div>
-          <div className="text-xs text-gray-500 mt-1">Last 7 analyses</div>
+          <div className="text-xs text-gray-500 mt-1">
+            {userData.totalAnalyses > 0 ? `${userData.totalAnalyses} analyses` : 'No analyses yet'}
+          </div>
         </div>
 
         <div className="card text-center">
-          <div className="text-2xl font-bold text-purple-600">3</div>
+          <div className="text-2xl font-bold text-purple-600">
+            {achievements.filter(a => a.earned).length}
+          </div>
           <div className="text-gray-600 mt-1">Achievements</div>
-          <div className="text-xs text-gray-500 mt-1">2 more to unlock</div>
+          <div className="text-xs text-gray-500 mt-1">
+            {achievements.length - achievements.filter(a => a.earned).length} more to unlock
+          </div>
         </div>
       </div>
 
@@ -375,11 +495,7 @@ const LearningInsights = () => {
                           ? 'bg-green-100 text-green-800'
                           : 'bg-primary-600 text-white hover:bg-primary-700'
                       }`}
-                      onClick={() => {
-                        if (!module.completed) {
-                          window.open(module.videoUrl, '_blank')
-                        }
-                      }}
+                      onClick={() => handleModuleComplete(module.id)}
                     >
                       {module.completed ? 'Completed' : 'Start'}
                     </button>
@@ -471,10 +587,10 @@ const LearningInsights = () => {
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div
                               className="bg-primary-500 h-2 rounded-full"
-                              style={{ width: `${achievement.progress}%` }}
+                              style={{ width: `${achievement.progress || 0}%` }}
                             ></div>
                           </div>
-                          <span className="text-xs text-gray-600">{achievement.progress}% complete</span>
+                          <span className="text-xs text-gray-600">{Math.round(achievement.progress || 0)}% complete</span>
                         </div>
                       )}
                     </div>
@@ -501,7 +617,7 @@ const LearningInsights = () => {
                 // Find the first incomplete module and open its video
                 const nextModule = learningPath.find(module => !module.completed)
                 if (nextModule) {
-                  window.open(nextModule.videoUrl, '_blank')
+                  handleModuleComplete(nextModule.id)
                 } else {
                   // If all modules are complete, show the first recommendation
                   const firstRec = recommendations[0]
