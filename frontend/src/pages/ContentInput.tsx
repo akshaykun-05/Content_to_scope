@@ -19,6 +19,13 @@ const ContentInput = () => {
       toast.success('Analysis complete!')
       // Store results in sessionStorage for the dashboard
       sessionStorage.setItem('analysisResults', JSON.stringify(data))
+      // Store the original content for potential adaptation
+      // Use the extracted content from the response if available (for URLs), otherwise use the input
+      const contentForAdaptation = data.originalContent || 
+                                  (contentType === 'text' ? textContent : 
+                                   contentType === 'url' ? urlContent : 
+                                   'Uploaded content')
+      sessionStorage.setItem('contentToAdapt', contentForAdaptation)
       navigate('/dashboard')
     },
     onError: (error: Error) => {
@@ -165,14 +172,14 @@ const ContentInput = () => {
           </p>
         </div>
 
-        {/* Main Content - Single Row Layout */}
-        <div className="grid lg:grid-cols-12 gap-6">
-          {/* Content Input - Left Side */}
+        {/* Main Content - Responsive Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Content Input - Full width on mobile, left side on desktop */}
           <div className="lg:col-span-8 space-y-4">
             {/* Content Type & Input Combined */}
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 p-6">
-              {/* Content Type Selector - Horizontal */}
-              <div className="flex space-x-2 mb-4">
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
+              {/* Content Type Selector - Stack on mobile, horizontal on desktop */}
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-4">
                 <button
                   onClick={() => setContentType('text')}
                   className={`flex-1 p-3 rounded-lg border-2 transition-all ${
@@ -273,16 +280,16 @@ const ContentInput = () => {
             </div>
           </div>
 
-          {/* Platform Selection & Analysis - Right Side */}
+          {/* Platform Selection & Analysis - Full width on mobile, right side on desktop */}
           <div className="lg:col-span-4 space-y-4">
-            {/* Platform Selection - Compact Grid */}
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 p-6">
+            {/* Platform Selection - Mobile-friendly Grid */}
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Target Platforms</h3>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2">
                 {platforms.map((platform) => (
                   <label
                     key={platform.id}
-                    className="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors text-sm"
                   >
                     <input
                       type="checkbox"

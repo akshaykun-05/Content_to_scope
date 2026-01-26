@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { AlertTriangle, CheckCircle, TrendingUp, Target, Lightbulb } from 'lucide-react'
 import { ContentAnalysisResponse } from '../services/api'
@@ -83,13 +84,28 @@ const AnalysisDashboard = () => {
           <p className="text-gray-600">AI-powered insights for your content</p>
         </div>
         <div className="flex space-x-2">
-          <button className="btn-secondary text-sm px-3 py-2">Export</button>
-          <button className="btn-primary text-sm px-3 py-2">New Analysis</button>
+          <button 
+            className="btn-secondary text-sm px-3 py-2"
+            onClick={() => {
+              const dataStr = JSON.stringify(analysisData, null, 2)
+              const dataBlob = new Blob([dataStr], {type: 'application/json'})
+              const url = URL.createObjectURL(dataBlob)
+              const link = document.createElement('a')
+              link.href = url
+              link.download = 'content-analysis.json'
+              link.click()
+            }}
+          >
+            Export
+          </button>
+          <Link to="/analyze" className="btn-primary text-sm px-3 py-2">
+            New Analysis
+          </Link>
         </div>
       </div>
 
-      {/* Scores Grid - More Compact */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      {/* Scores Grid - More Compact and Mobile-friendly */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
         <div className="bg-white rounded-lg shadow-sm border p-4 text-center">
           <div className={`text-3xl font-bold ${getScoreColor(overallScore)}`}>
             {overallScore}
@@ -116,8 +132,8 @@ const AnalysisDashboard = () => {
         ))}
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid lg:grid-cols-3 gap-6">
+      {/* Main Content Grid - Mobile-friendly */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Engagement Factors - Compact */}
         <div className="bg-white rounded-lg shadow-sm border p-5">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Engagement Factors</h2>
@@ -175,7 +191,14 @@ const AnalysisDashboard = () => {
                   <span className="text-xs text-green-600 font-medium">{improvement.expectedImpact}</span>
                 </div>
                 <p className="text-gray-600 text-xs mb-2">{improvement.description}</p>
-                <button className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded hover:bg-primary-200 transition-colors">
+                <button 
+                  className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded hover:bg-primary-200 transition-colors"
+                  onClick={() => {
+                    // Copy improvement suggestion to clipboard
+                    navigator.clipboard.writeText(improvement.description)
+                    alert('Improvement suggestion copied to clipboard!')
+                  }}
+                >
                   Apply Fix
                 </button>
               </div>
@@ -184,8 +207,8 @@ const AnalysisDashboard = () => {
         </div>
       </div>
 
-      {/* Issues & Next Steps - Side by Side */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      {/* Issues & Next Steps - Mobile-friendly */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Failure Points - Compact */}
         <div className="bg-white rounded-lg shadow-sm border p-5">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
@@ -229,12 +252,29 @@ const AnalysisDashboard = () => {
                 Start with high-priority improvements to maximize your content's performance.
               </p>
               <div className="flex space-x-2">
-                <button className="bg-primary-600 hover:bg-primary-700 text-white text-sm px-3 py-2 rounded-lg transition-colors">
+                <Link 
+                  to="/adapt" 
+                  className="bg-primary-600 hover:bg-primary-700 text-white text-sm px-3 py-2 rounded-lg transition-colors"
+                  onClick={() => {
+                    // Store the analyzed content for adaptation
+                    const storedResults = sessionStorage.getItem('analysisResults')
+                    if (storedResults) {
+                      try {
+                        const data = JSON.parse(storedResults)
+                        // Use the original content from the analysis response if available
+                        const contentForAdaptation = data.originalContent || 'Sample content for adaptation'
+                        sessionStorage.setItem('contentToAdapt', contentForAdaptation)
+                      } catch (error) {
+                        console.error('Failed to store content for adaptation:', error)
+                      }
+                    }
+                  }}
+                >
                   Adapt for Platforms
-                </button>
-                <button className="bg-white text-primary-700 border border-primary-300 hover:bg-primary-50 text-sm px-3 py-2 rounded-lg transition-colors">
+                </Link>
+                <Link to="/learn" className="bg-white text-primary-700 border border-primary-300 hover:bg-primary-50 text-sm px-3 py-2 rounded-lg transition-colors">
                   Learn More
-                </button>
+                </Link>
               </div>
             </div>
           </div>

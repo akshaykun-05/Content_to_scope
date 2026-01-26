@@ -8,16 +8,12 @@ import * as origins from 'aws-cdk-lib/aws-cloudfront-origins'
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment'
 import { Construct } from 'constructs'
 
-// Declare process for environment variables
-declare const process: {
-  env: {
-    OPENAI_API_KEY?: string
-  }
-}
-
 export class ContentscopeStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props)
+
+    // OpenAI API Key - in production, use AWS Secrets Manager
+    const openaiApiKey = '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'
 
     // DynamoDB Tables
     const analysisTable = new dynamodb.Table(this, 'AnalysisTable', {
@@ -75,7 +71,7 @@ export class ContentscopeStack extends cdk.Stack {
       environment: {
         ANALYSIS_TABLE_NAME: analysisTable.tableName,
         CONTENT_BUCKET_NAME: contentBucket.bucketName,
-        OPENAI_API_KEY: process.env.OPENAI_API_KEY || 'your-openai-api-key'
+        OPENAI_API_KEY: openaiApiKey
       }
     })
 
@@ -87,7 +83,7 @@ export class ContentscopeStack extends cdk.Stack {
       memorySize: 512,
       environment: {
         ANALYSIS_TABLE_NAME: analysisTable.tableName,
-        OPENAI_API_KEY: process.env.OPENAI_API_KEY || 'your-openai-api-key'
+        OPENAI_API_KEY: openaiApiKey
       }
     })
 

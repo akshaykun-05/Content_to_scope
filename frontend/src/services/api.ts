@@ -50,6 +50,7 @@ export interface ContentAnalysisRequest {
 export interface ContentAnalysisResponse {
   analysisId: string
   overallScore: number
+  originalContent?: string  // Add this to store the extracted/processed content
   platformScores: Array<{
     platform: string
     score: number

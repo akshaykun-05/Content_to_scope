@@ -64,24 +64,24 @@ const LandingPage = () => {
               <Zap className="w-4 h-4 mr-2" />
               AI-Powered Content Analysis
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-gray-900 leading-tight">
               Understand Why Your
               <span className="bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent"> Content Fails</span>
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4">
               AI-powered content analysis that explains failures, adapts content for different platforms, 
               and teaches you to create better content through explainable insights.
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/analyze" className="btn-primary inline-flex items-center space-x-2 px-8 py-4 text-lg">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
+            <Link to="/analyze" className="btn-primary inline-flex items-center justify-center space-x-2 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg">
               <span>Start Analyzing Content</span>
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </Link>
-            <button className="btn-secondary px-8 py-4 text-lg">
+            <Link to="/learn" className="btn-secondary px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg text-center">
               Watch Demo
-            </button>
+            </Link>
           </div>
 
           {/* Hero Image with Enhanced Design */}
@@ -125,7 +125,7 @@ const LandingPage = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 px-4">
             {features.map((feature, index) => {
               const Icon = feature.icon
               return (
@@ -153,7 +153,7 @@ const LandingPage = () => {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-4">
               {testimonials.map((testimonial, index) => (
                 <div key={index} className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
                   <div className="flex items-center mb-4">
@@ -203,9 +203,9 @@ const LandingPage = () => {
                   <span>Get Started Free</span>
                   <ArrowRight className="w-5 h-5" />
                 </Link>
-                <button className="inline-flex items-center space-x-2 border-2 border-white text-white font-semibold py-4 px-8 rounded-xl hover:bg-white hover:text-primary-600 transition-colors">
+                <Link to="/learn" className="inline-flex items-center space-x-2 border-2 border-white text-white font-semibold py-4 px-8 rounded-xl hover:bg-white hover:text-primary-600 transition-colors">
                   <span>Learn More</span>
-                </button>
+                </Link>
               </div>
               
               {/* Stats */}

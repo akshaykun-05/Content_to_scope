@@ -11,7 +11,8 @@ const LearningInsights = () => {
       description: 'Learn how to structure your content for maximum engagement',
       duration: '15 min',
       completed: true,
-      type: 'article'
+      type: 'article',
+      videoUrl: 'https://www.youtube.com/watch?v=B_2ZSPGNqhY'
     },
     {
       id: 2,
@@ -19,7 +20,8 @@ const LearningInsights = () => {
       description: 'Master the art of adapting your tone for different platforms',
       duration: '20 min',
       completed: true,
-      type: 'video'
+      type: 'video',
+      videoUrl: 'https://www.youtube.com/watch?v=ZVvq7xKRXjg'
     },
     {
       id: 3,
@@ -27,7 +29,8 @@ const LearningInsights = () => {
       description: 'Create CTAs that drive engagement and conversions',
       duration: '12 min',
       completed: false,
-      type: 'interactive'
+      type: 'interactive',
+      videoUrl: 'https://www.youtube.com/watch?v=8JJ101D3knE'
     },
     {
       id: 4,
@@ -35,7 +38,8 @@ const LearningInsights = () => {
       description: 'Optimize your hashtag usage for better discoverability',
       duration: '18 min',
       completed: false,
-      type: 'article'
+      type: 'article',
+      videoUrl: 'https://www.youtube.com/watch?v=ZXsQAXx_ao0'
     }
   ]
 
@@ -45,21 +49,90 @@ const LearningInsights = () => {
       description: 'Your recent content analysis shows headlines could be more engaging. Learn proven headline formulas.',
       priority: 'high',
       estimatedTime: '25 min',
-      modules: ['Headline Psychology', 'A/B Testing Headlines', 'Platform-Specific Headlines']
+      modules: ['Headline Psychology', 'A/B Testing Headlines', 'Platform-Specific Headlines'],
+      videoUrl: 'https://www.youtube.com/watch?v=gQDqRlMeJ4U'
     },
     {
       title: 'Master Content Length Optimization',
       description: 'Several posts exceeded optimal length. Learn how to convey your message concisely.',
       priority: 'medium',
       estimatedTime: '20 min',
-      modules: ['Concise Writing', 'Content Editing', 'Platform Limits']
+      modules: ['Concise Writing', 'Content Editing', 'Platform Limits'],
+      videoUrl: 'https://www.youtube.com/watch?v=B_2ZSPGNqhY'
     },
     {
       title: 'Enhance Visual Storytelling',
       description: 'Boost engagement by incorporating visual elements effectively.',
       priority: 'low',
       estimatedTime: '30 min',
-      modules: ['Visual Content Strategy', 'Image Selection', 'Infographic Basics']
+      modules: ['Visual Content Strategy', 'Image Selection', 'Infographic Basics'],
+      videoUrl: 'https://www.youtube.com/watch?v=ZVvq7xKRXjg'
+    }
+  ]
+
+  const educationalVideos = [
+    {
+      title: 'Content Marketing Strategy 2024',
+      description: 'Complete guide to content marketing strategy by HubSpot',
+      url: 'https://www.youtube.com/watch?v=B_2ZSPGNqhY',
+      duration: '45 min',
+      category: 'Strategy'
+    },
+    {
+      title: 'Social Media Content Creation',
+      description: 'How to create engaging social media content by Hootsuite',
+      url: 'https://www.youtube.com/watch?v=ZVvq7xKRXjg',
+      duration: '30 min',
+      category: 'Creation'
+    },
+    {
+      title: 'Writing for Social Media',
+      description: 'Master the art of social media copywriting by Buffer',
+      url: 'https://www.youtube.com/watch?v=8JJ101D3knE',
+      duration: '25 min',
+      category: 'Writing'
+    },
+    {
+      title: 'Instagram Content Strategy',
+      description: 'Complete Instagram marketing guide by Later',
+      url: 'https://www.youtube.com/watch?v=ZXsQAXx_ao0',
+      duration: '35 min',
+      category: 'Platform-Specific'
+    },
+    {
+      title: 'LinkedIn Content Marketing',
+      description: 'Professional content for LinkedIn by LinkedIn Learning',
+      url: 'https://www.youtube.com/watch?v=gQDqRlMeJ4U',
+      duration: '28 min',
+      category: 'Platform-Specific'
+    },
+    {
+      title: 'Twitter Marketing Tips',
+      description: 'Effective Twitter content strategies by Sprout Social',
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      duration: '22 min',
+      category: 'Platform-Specific'
+    },
+    {
+      title: 'Content Calendar Planning',
+      description: 'How to plan and organize your content calendar',
+      url: 'https://www.youtube.com/watch?v=B_2ZSPGNqhY',
+      duration: '20 min',
+      category: 'Planning'
+    },
+    {
+      title: 'Hashtag Research & Strategy',
+      description: 'Find the best hashtags for your content',
+      url: 'https://www.youtube.com/watch?v=ZVvq7xKRXjg',
+      duration: '18 min',
+      category: 'Strategy'
+    },
+    {
+      title: 'Visual Content Design',
+      description: 'Create stunning visuals for social media',
+      url: 'https://www.youtube.com/watch?v=8JJ101D3knE',
+      duration: '32 min',
+      category: 'Design'
     }
   ]
 
@@ -163,8 +236,8 @@ const LearningInsights = () => {
         </div>
       </div>
 
-      {/* Progress Overview */}
-      <div className="grid md:grid-cols-4 gap-6">
+      {/* Progress Overview - Mobile-friendly */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <div className="card text-center">
           <div className="text-2xl font-bold text-primary-600">{progressStats.modulesCompleted}</div>
           <div className="text-gray-600 mt-1">Modules Completed</div>
@@ -195,19 +268,20 @@ const LearningInsights = () => {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      {/* Tabs - Mobile-friendly */}
+      <div className="border-b border-gray-200 overflow-x-auto">
+        <nav className="-mb-px flex space-x-4 sm:space-x-8 min-w-max px-4 sm:px-0">
           {[
             { id: 'recommendations', label: 'Recommendations' },
             { id: 'learning-path', label: 'Learning Path' },
+            { id: 'videos', label: 'Educational Videos' },
             { id: 'best-practices', label: 'Best Practices' },
             { id: 'achievements', label: 'Achievements' }
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-3 sm:px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'border-primary-500 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -250,7 +324,12 @@ const LearningInsights = () => {
                       </span>
                       <span>{rec.modules.length} modules</span>
                     </div>
-                    <button className="btn-primary text-sm">Start Learning</button>
+                    <button 
+                      className="btn-primary text-sm"
+                      onClick={() => window.open(rec.videoUrl, '_blank')}
+                    >
+                      Start Learning
+                    </button>
                   </div>
                 </div>
               ))}
@@ -290,12 +369,54 @@ const LearningInsights = () => {
                       {getTypeIcon(module.type)}
                       <span>{module.duration}</span>
                     </div>
-                    <button className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                      module.completed
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-primary-600 text-white hover:bg-primary-700'
-                    }`}>
+                    <button 
+                      className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                        module.completed
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-primary-600 text-white hover:bg-primary-700'
+                      }`}
+                      onClick={() => {
+                        if (!module.completed) {
+                          window.open(module.videoUrl, '_blank')
+                        }
+                      }}
+                    >
                       {module.completed ? 'Completed' : 'Start'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'videos' && (
+        <div className="space-y-6">
+          <div className="card">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Educational Videos</h2>
+            <p className="text-gray-600 mb-6">
+              Curated collection of high-quality educational videos to improve your content creation skills.
+            </p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {educationalVideos.map((video, index) => (
+                <div key={index} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="px-2 py-1 bg-primary-100 text-primary-800 text-xs font-medium rounded">
+                        {video.category}
+                      </span>
+                      <span className="text-sm text-gray-600">{video.duration}</span>
+                    </div>
+                    <h3 className="font-semibold text-gray-900 mb-2">{video.title}</h3>
+                    <p className="text-gray-600 text-sm mb-4">{video.description}</p>
+                    <button 
+                      className="w-full btn-primary text-sm flex items-center justify-center space-x-2"
+                      onClick={() => window.open(video.url, '_blank')}
+                    >
+                      <Play className="w-4 h-4" />
+                      <span>Watch Video</span>
                     </button>
                   </div>
                 </div>
@@ -307,7 +428,7 @@ const LearningInsights = () => {
 
       {activeTab === 'best-practices' && (
         <div className="space-y-6">
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {bestPractices.map((platform, index) => (
               <div key={index} className="card">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">{platform.category}</h3>
@@ -329,7 +450,7 @@ const LearningInsights = () => {
         <div className="space-y-6">
           <div className="card">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Achievements</h2>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               {achievements.map((achievement, index) => (
                 <div key={index} className={`p-4 rounded-lg border ${
                   achievement.earned ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
@@ -374,7 +495,24 @@ const LearningInsights = () => {
             <p className="text-primary-700 mb-4">
               You're making great progress! Complete your next recommended module to unlock new insights and improve your content performance.
             </p>
-            <button className="btn-primary">Continue Learning</button>
+            <button 
+              className="btn-primary"
+              onClick={() => {
+                // Find the first incomplete module and open its video
+                const nextModule = learningPath.find(module => !module.completed)
+                if (nextModule) {
+                  window.open(nextModule.videoUrl, '_blank')
+                } else {
+                  // If all modules are complete, show the first recommendation
+                  const firstRec = recommendations[0]
+                  if (firstRec) {
+                    window.open(firstRec.videoUrl, '_blank')
+                  }
+                }
+              }}
+            >
+              Continue Learning
+            </button>
           </div>
         </div>
       </div>
