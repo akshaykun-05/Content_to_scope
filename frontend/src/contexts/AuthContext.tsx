@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { UserStats } from '../services/api'
 
-// User interface that matches Firebase User
+// User interface that matches what we need
 interface User {
   uid: string
   email: string | null

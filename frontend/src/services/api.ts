@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { getAuth } from 'firebase/auth'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kw1mp0na2e.execute-api.us-east-1.amazonaws.com/prod/api/v1'
 
@@ -14,13 +13,15 @@ const apiClient = axios.create({
 // Request interceptor
 apiClient.interceptors.request.use(
   async (config) => {
-    // Add Firebase auth token if available
-    const auth = getAuth()
-    const user = auth.currentUser
-    if (user) {
+    // Add auth token from session storage
+    const session = localStorage.getItem('contentscope_session')
+    if (session) {
       try {
-        const token = await user.getIdToken()
-        config.headers.Authorization = `Bearer ${token}`
+        const { user } = JSON.parse(session)
+        if (user && user.getIdToken) {
+          const token = await user.getIdToken()
+          config.headers.Authorization = `Bearer ${token}`
+        }
       } catch (error) {
         console.error('Failed to get auth token:', error)
       }
